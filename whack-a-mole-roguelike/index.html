@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>モグラスマッシャーズ！ - 地下世界の冒険</title>
+    <meta name="description" content="地下世界へようこそ！かわいいモグラ「モグ太」と一緒に、伝説のハンマーを探す冒険に出かけよう。">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header class="site-header">
+        <nav class="container">
+            <div class="logo">モグラ<span class="accent">スマッシャーズ！</span></div>
+            <ul class="nav-links">
+                <li><a href="#about">どんなゲーム？</a></li>
+                <li><a href="#character">キャラクター</a></li>
+                <li><a href="#gallery">ギャラリー</a></li>
+                <li><a href="#subscribe" class="btn btn-primary small">予約する！</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="hero" class="hero-section">
+            <div class="carousel-container">
+                <div class="carousel-track">
+                    <div class="carousel-slide active" style="background-image: url('assets/fantasy_battle.png');">
+                        <div class="slide-content hero-main-slide">
+                            <h1 class="main-logo-text">モグラスマッシャーズ！</h1>
+                            <p class="hero-subtitle">伝説の秘宝「レインボーハンマー」を求めて</p>
+                            <div class="platform-badges">
+                                <span class="badge">Nintendo Switch</span>
+                                <span class="badge">Steam</span>
+                                <span class="badge">Smartphone</span>
+                            </div>
+                            <p class="release-text">2025.12.25 ON SALE</p>
+                        </div>
+                    </div>
+                    <div class="carousel-slide" style="background-image: url('assets/fantasy_world.png');">
+                        <div class="slide-content">
+                            <h1>不思議な洞窟</h1>
+                            <p>光るキノコに古代の遺跡。<br>見たことのない景色がキミを待っている。</p>
+                        </div>
+                    </div>
+                    <div class="carousel-slide" style="background-image: url('assets/fantasy_hammer.png');">
+                        <div class="slide-content">
+                            <h1>お宝ざくざく</h1>
+                            <p>集めたジェムで装備を強化！<br>最強のモグラハンターになろう。</p>
+                        </div>
+                    </div>
+                </div>
+                <button class="carousel-btn prev">❮</button>
+                <button class="carousel-btn next">❯</button>
+                <div class="carousel-indicators"></div>
+            </div>
+
+            <div class="hero-overlay-cta">
+                <a href="#download" class="btn btn-primary large">今すぐ冒険へ出発！</a>
+            </div>
+        </section>
+
+        <section id="about" class="about-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2>そこは、光る地下帝国。</h2>
+                    <p>掘って、戦って、強くなる！ローグライク・アクション。</p>
+                </div>
+                <div class="grid-2col">
+                    <div class="text-content">
+                        <p>『モグラスマッシャーズ！』の舞台は、神秘的な地下世界「アンダーグラウンド・パラダイス」。</p>
+                        <p>毎回形が変わる洞窟ダンジョンには、悪いモグラ軍団がいっぱい！でも大丈夫、キミには最強のハンマーがある！</p>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-item">
+                            <span class="number">B100F</span>
+                            <span class="label">最深部</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="number">Lv.99</span>
+                            <span class="label">最大レベル</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="character" class="character-section">
+            <div class="container">
+                <h2 class="section-title">キャラクター紹介</h2>
+                <div class="character-card">
+                    <div class="character-visual">
+                        <!-- CSS Art: Hero Mole -->
+                        <div class="css-mole">
+                            <div class="hat">
+                                <div class="helmet-light"></div>
+                            </div>
+                            <div class="face">
+                                <div class="eyes">
+                                    <div class="eye left"></div>
+                                    <div class="eye right"></div>
+                                </div>
+                                <div class="snout">
+                                    <div class="nose"></div>
+                                </div>
+                                <div class="blush left"></div>
+                                <div class="blush right"></div>
+                            </div>
+                            <div class="body">
+                                <div class="overalls"></div>
+                                <div class="arm left"></div>
+                                <div class="arm right thumbs-up"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="character-info">
+                        <h3>モグ太 (Moguta)</h3>
+                        <p class="role">職業：みならい勇者</p>
+                        <p class="desc">
+                            元気いっぱいなモグラの男の子。<br>
+                            「地上にはもっと美味しいミミズがいるらしい」という噂を信じて旅に出た。<br>
+                            愛用のヘルメットは父ちゃんからのプレゼント。
+                        </p>
+                        <div class="skill-tags">
+                            <span>#ドリルアタック</span>
+                            <span>#お調子者</span>
+                            <span>#暗いところが好き</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="video" class="video-section">
+            <div class="container">
+                <h2 class="section-title">プレイ動画をチェック！</h2>
+                <div class="video-wrapper">
+                    <div class="video-placeholder">
+                        <div class="play-button">▶</div>
+                        <p>クリックして最新トレーラーを再生</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="gallery" class="gallery-section">
+            <div class="container">
+                <h2 class="section-title">冒険の様子</h2>
+                <div class="gallery-grid">
+                    <div class="gallery-item large" style="background-image: url('assets/fantasy_battle.png')"></div>
+                    <div class="gallery-item" style="background-image: url('assets/fantasy_world.png')"></div>
+                    <div class="gallery-item" style="background-image: url('assets/fantasy_hammer.png')"></div>
+                    <div class="gallery-item placeholder-grid">
+                        <span>New Stage!<br>Coming Soon</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="features" class="features-section">
+            <div class="container">
+                <h2 class="section-title">楽しいポイント</h2>
+                <div class="feature-grid">
+                    <div class="feature-card red">
+                        <div class="icon-box">💎</div>
+                        <h3>レア鉱石</h3>
+                        <p>壁を掘って宝石を発見！換金して新しい装備を買おう。</p>
+                    </div>
+                    <div class="feature-card blue">
+                        <div class="icon-box">🍄</div>
+                        <h3>魔法キノコ</h3>
+                        <p>食べると巨大化したり、スピードアップしたり。効果は食べてのお楽しみ！</p>
+                    </div>
+                    <div class="feature-card yellow">
+                        <div class="icon-box">🔦</div>
+                        <h3>探索ツール</h3>
+                        <p>暗闇を照らすライトや、壁を爆破するダイナマイトを使いこなせ。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="cta" class="cta-section">
+            <div class="container">
+                <h2>さあ、地下深くへ！</h2>
+                <p>モグ太と一緒に、伝説を掘り当てよう。</p>
+                <form class="newsletter-form">
+                    <input type="email" placeholder="メールアドレス" required>
+                    <button type="submit" class="btn btn-primary">事前登録する</button>
+                </form>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <div class="container footer-content">
+            <div class="footer-logo">モグラスマッシャーズ！</div>
+            <p>&copy; 2025 ISERIGAMES. All rights reserved.</p>
+            <div class="social-links">
+                <a href="#">Twitter</a>
+                <a href="#">Instagram</a>
+            </div>
+        </div>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
