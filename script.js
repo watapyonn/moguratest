@@ -69,11 +69,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeGameBtn = document.getElementById('close-game-btn');
 
     // Buttons
-    // const gameStartBtn = document.getElementById('game-start-btn'); // Renamed/Removed
     const difficultyButtons = document.querySelectorAll('.btn-difficulty');
     const titleRankingBtn = document.getElementById('title-ranking-btn');
     const registerBtn = document.getElementById('register-btn');
-    const rankingRetryBtn = document.getElementById('ranking-retry-btn');
     const rankingTitleBtn = document.getElementById('ranking-title-btn');
     const rankingTabs = document.querySelectorAll('.tab-btn');
 
@@ -104,10 +102,15 @@ document.addEventListener('DOMContentLoaded', () => {
     let peepTimer;
     let countdownTimer;
     let isPlaying = false;
-    let isSequencing = false; // Flag for countdown phase
+    let isSequencing = false;
     let lastHole;
     let currentDifficulty = 'normal';
     let currentRankingTab = 'normal';
+
+    // Golden Time State
+    let currentCombo = 0;
+    let isGoldenTime = false;
+    let goldenTimer;
 
     // Difficulty Config
     const DIFFICULTY = {
@@ -119,35 +122,48 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Audio System ---
     const sounds = {
+        menu: new Audio('assets/sounds/menu.mp3'),
         bgm: new Audio('assets/sounds/bgm.mp3'),
         hit: new Audio('assets/sounds/hit.mp3'),
         goldHit: new Audio('assets/sounds/gold_hit.mp3'),
         spawn: new Audio('assets/sounds/spawn.mp3'),
         count: new Audio('assets/sounds/count.mp3'),
-        start: new Audio('assets/sounds/start.mp3'),
+        finish: new Audio('assets/sounds/finish.mp3'),
+        button: new Audio('assets/sounds/button.mp3'),
     };
 
     // Config
     sounds.bgm.loop = true;
     sounds.bgm.volume = 0.5;
+    sounds.menu.loop = true;
+    sounds.menu.volume = 0.5;
 
     const playSound = (name) => {
         const sound = sounds[name];
         if (sound) {
-            sound.currentTime = 0;
-            sound.play().catch(() => { });
+            if (name === 'bgm' || name === 'menu') {
+                if (sound.paused) sound.play().catch(() => { });
+            } else {
+                sound.currentTime = 0;
+                sound.play().catch(() => { });
+            }
         }
     };
 
-    const stopBGM = () => {
+    const stopAllSounds = () => {
         sounds.bgm.pause();
         sounds.bgm.currentTime = 0;
+        sounds.menu.pause();
+        sounds.menu.currentTime = 0;
+        sounds.finish.pause();
+        sounds.finish.currentTime = 0;
     };
 
     const closeAll = () => {
         stopGame();
-        isSequencing = false; // Stop any active countdown
-        clearTimeout(countdownTimer); // Clear countdown timer
+        isSequencing = false;
+        clearTimeout(countdownTimer);
+        stopAllSounds();
         modal.classList.add('hidden');
     };
 
@@ -164,12 +180,45 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     const switchScene = (sceneName) => {
-        Object.values(scenes).forEach(el => el.classList.remove('active'));
-        setTimeout(() => {
-            Object.values(scenes).forEach(el => el.classList.add('hidden'));
-            scenes[sceneName].classList.remove('hidden');
-            scenes[sceneName].classList.add('active');
-        }, 10);
+        Object.values(scenes).forEach(el => {
+            el.classList.remove('active');
+            el.classList.add('hidden');
+        });
+
+        const target = scenes[sceneName];
+        if (target) {
+            target.classList.remove('hidden');
+            target.classList.add('active');
+        }
+
+        if (sceneName === 'title' || sceneName === 'ranking') {
+            playSound('menu');
+        } else if (sceneName === 'play') {
+            if (sounds.menu) {
+                sounds.menu.pause();
+                sounds.menu.currentTime = 0;
+            }
+        }
+    };
+
+    const startGoldenTime = () => {
+        if (isGoldenTime) return;
+        isGoldenTime = true;
+        currentCombo = 0;
+        scenes.play.classList.add('golden-mode');
+        // Play distinct sound (using finish for now as placeholder or maybe rapidly spawn audio)
+        playSound('goldHit');
+        playSound('goldHit');
+
+        // Duration 10s
+        goldenTimer = setTimeout(endGoldenTime, 10000);
+    };
+
+    const endGoldenTime = () => {
+        isGoldenTime = false;
+        currentCombo = 0;
+        scenes.play.classList.remove('golden-mode');
+        clearTimeout(goldenTimer);
     };
 
     const initGrid = () => {
@@ -200,6 +249,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     spawnHitEffect(e.pageX, e.pageY, points);
                     hole.classList.remove('up');
                     mole.classList.remove('gold');
+
+                    // Combo Logic
+                    if (!isGoldenTime) {
+                        currentCombo++;
+                        if (currentCombo >= 10) {
+                            startGoldenTime();
+                        }
+                    }
                 }
             });
         }
@@ -229,10 +286,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const peep = () => {
         const holes = document.querySelectorAll('.hole');
         const config = DIFFICULTY[currentDifficulty];
+
+        // Speed up slightly during golden time? Or keep same? Keeping same for now but all gold.
         const time = randomTime(config.min, config.max);
         const hole = randomHole(holes);
         const mole = hole.querySelector('.mole');
-        const isGold = Math.random() < config.goldChance;
+
+        // Force Gold if Golden Time
+        let isGold = isGoldenTime ? true : (Math.random() < config.goldChance);
 
         if (isGold) mole.classList.add('gold');
         else mole.classList.remove('gold');
@@ -267,12 +328,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 countdownOverlay.style.animation = 'none';
                 countdownOverlay.offsetHeight;
                 countdownOverlay.style.animation = 'countPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)';
-                playSound('count');
+
+                // Play sound only at start (3)
+                if (count === 3) playSound('count');
+
                 count--;
                 countdownTimer = setTimeout(countStep, 1000);
             } else {
                 countdownOverlay.textContent = 'GO!';
-                playSound('start');
+                // Sound already playing from start
                 countdownTimer = setTimeout(() => {
                     if (!isSequencing) return;
                     countdownOverlay.classList.add('hidden');
@@ -289,6 +353,12 @@ document.addEventListener('DOMContentLoaded', () => {
         timeLeft = 30;
         scoreDisplay.textContent = 0;
         timeDisplay.textContent = 30;
+
+        // Reset Combo
+        currentCombo = 0;
+        isGoldenTime = false;
+        scenes.play.classList.remove('golden-mode');
+
         isPlaying = true;
 
         playSound('bgm');
@@ -309,7 +379,7 @@ document.addEventListener('DOMContentLoaded', () => {
         countdownOverlay.classList.remove('hidden');
         countdownOverlay.style.display = 'block';
         countdownOverlay.style.opacity = '1';
-        playSound('start'); // Or another sound if available
+        playSound('finish');
 
         setTimeout(() => {
             countdownOverlay.classList.add('hidden');
@@ -320,11 +390,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const stopGame = () => {
         isPlaying = false;
         isSequencing = false;
+
+        // Clear Golden Time
+        clearTimeout(goldenTimer);
+        isGoldenTime = false;
+        scenes.play.classList.remove('golden-mode');
+
         clearInterval(gameTimer);
         clearTimeout(peepTimer);
         const holes = document.querySelectorAll('.hole');
         holes.forEach(h => h.classList.remove('up'));
-        stopBGM();
+        stopAllSounds();
     };
 
     // --- Ranking Logic ---
@@ -386,6 +462,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // --- Events ---
+    // Add button sound to all buttons
+    document.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => playSound('button'));
+    });
+
     difficultyButtons.forEach(btn => {
         btn.addEventListener('click', () => {
             startSequence(btn.dataset.diff);
@@ -399,14 +480,17 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    titleRankingBtn.addEventListener('click', () => {
-        currentRankingTab = 'normal'; // Default view
-        openRankingScene();
-    });
+    if (titleRankingBtn) {
+        titleRankingBtn.addEventListener('click', () => {
+            currentRankingTab = 'normal'; // Default view
+            openRankingScene();
+        });
+    }
 
-    registerBtn.addEventListener('click', registerScore);
-    rankingRetryBtn.addEventListener('click', () => startSequence(currentDifficulty)); // Retry same diff
-    rankingTitleBtn.addEventListener('click', () => switchScene('title'));
+    if (registerBtn) registerBtn.addEventListener('click', registerScore);
+
+    // Fixed: Removed missing rankingRetryBtn listener
+    if (rankingTitleBtn) rankingTitleBtn.addEventListener('click', () => switchScene('title'));
 
     playerNameInput.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') registerScore();
