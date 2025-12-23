@@ -45,6 +45,44 @@ document.addEventListener('DOMContentLoaded', () => {
         slideInterval = setInterval(nextSlide, slideIntervalTime);
     }
 
+    // --- Swipe Support ---
+    let touchStartX = 0;
+    let touchEndX = 0;
+
+    track.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+        touchStartY = e.changedTouches[0].screenY; // Track Y to detect scrolling
+    });
+
+    // Prevent scrolling if swiping horizontally
+    track.addEventListener('touchmove', (e) => {
+        const currentX = e.changedTouches[0].screenX;
+        const currentY = e.changedTouches[0].screenY;
+        const diffX = Math.abs(currentX - touchStartX);
+        const diffY = Math.abs(currentY - touchStartY);
+
+        // If horizontal movement > vertical, assuming swipe -> block scroll
+        if (diffX > diffY) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+
+    track.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    });
+
+    const handleSwipe = () => {
+        if (touchEndX < touchStartX - 50) {
+            nextSlide();
+            resetTimer();
+        }
+        if (touchEndX > touchStartX + 50) {
+            prevSlide();
+            resetTimer();
+        }
+    }
+
     // --- Smooth Scroll ---
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
@@ -114,10 +152,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Difficulty Config
     const DIFFICULTY = {
-        easy: { label: '簡単', min: 800, max: 1500, goldChance: 0.3 },
-        normal: { label: '普通', min: 400, max: 1000, goldChance: 0.2 },
-        hard: { label: '難しい', min: 300, max: 800, goldChance: 0.15 },
-        demon: { label: '鬼', min: 150, max: 400, goldChance: 0.1 }
+        easy: { label: '簡単', min: 800, max: 1500, goldChance: 0.3, penaltyChance: 0.1 },
+        normal: { label: '普通', min: 400, max: 1000, goldChance: 0.2, penaltyChance: 0.2 },
+        hard: { label: '難しい', min: 300, max: 800, goldChance: 0.15, penaltyChance: 0.3 },
+        demon: { label: '鬼', min: 150, max: 400, goldChance: 0.1, penaltyChance: 0.4 }
     };
 
     // --- Audio System ---
@@ -157,6 +195,10 @@ document.addEventListener('DOMContentLoaded', () => {
         sounds.menu.currentTime = 0;
         sounds.finish.pause();
         sounds.finish.currentTime = 0;
+        sounds.count.pause(); // Stop count sound
+        sounds.count.currentTime = 0;
+        sounds.spawn.pause();
+        sounds.spawn.currentTime = 0;
     };
 
     const closeAll = () => {
@@ -165,6 +207,7 @@ document.addEventListener('DOMContentLoaded', () => {
         clearTimeout(countdownTimer);
         stopAllSounds();
         modal.classList.add('hidden');
+        countdownOverlay.classList.add('hidden'); // Force hide overlay
     };
 
     if (startAdventureBtn) {
@@ -205,7 +248,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isGoldenTime) return;
         isGoldenTime = true;
         currentCombo = 0;
-        scenes.play.classList.add('golden-mode');
+        document.querySelector('.game-container').classList.add('golden-mode');
         // Play distinct sound (using finish for now as placeholder or maybe rapidly spawn audio)
         playSound('goldHit');
         playSound('goldHit');
@@ -217,7 +260,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const endGoldenTime = () => {
         isGoldenTime = false;
         currentCombo = 0;
-        scenes.play.classList.remove('golden-mode');
+        document.querySelector('.game-container').classList.remove('golden-mode');
         clearTimeout(goldenTimer);
     };
 
@@ -238,17 +281,32 @@ document.addEventListener('DOMContentLoaded', () => {
             hole.appendChild(mole);
             moleGrid.appendChild(hole);
 
-            mole.addEventListener('click', (e) => {
+            hole.addEventListener('click', (e) => {
                 if (!e.isTrusted) return;
+                // Only trigger if hole is active (up)
                 if (hole.classList.contains('up')) {
                     const isGold = mole.classList.contains('gold');
-                    const points = isGold ? 50 : 10;
+                    const isPenalty = mole.classList.contains('penalty');
+
+                    let points = 10;
+                    if (isGold) points = 50;
+                    if (isPenalty) points = -10;
+
                     score += points;
                     scoreDisplay.textContent = score;
-                    playSound(isGold ? 'goldHit' : 'hit');
-                    spawnHitEffect(e.pageX, e.pageY, points);
+
+                    if (isPenalty) {
+                        playSound('hit');
+                        currentCombo = 0;
+                        spawnHitEffect(e.pageX, e.pageY, points, true);
+                    } else {
+                        playSound(isGold ? 'goldHit' : 'hit');
+                        spawnHitEffect(e.pageX, e.pageY, points, false);
+                    }
+
                     hole.classList.remove('up');
                     mole.classList.remove('gold');
+                    mole.classList.remove('penalty');
 
                     // Combo Logic
                     if (!isGoldenTime) {
@@ -263,10 +321,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     initGrid();
 
-    const spawnHitEffect = (x, y, amount) => {
+    const spawnHitEffect = (x, y, amount, isBad) => {
         const el = document.createElement('div');
         el.classList.add('hit-effect');
-        el.textContent = `+${amount}`;
+        if (isBad) el.classList.add('bad');
+        el.textContent = amount > 0 ? `+${amount}` : `${amount}`;
         el.style.left = `${x}px`;
         el.style.top = `${y}px`;
         document.body.appendChild(el);
@@ -292,11 +351,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const hole = randomHole(holes);
         const mole = hole.querySelector('.mole');
 
+        // Reset classes
+        mole.classList.remove('gold', 'penalty');
+
         // Force Gold if Golden Time
         let isGold = isGoldenTime ? true : (Math.random() < config.goldChance);
+        let isPenalty = false;
+
+        if (!isGoldenTime && !isGold) {
+            const rand = Math.random();
+            if (rand < config.penaltyChance) isPenalty = true;
+        }
 
         if (isGold) mole.classList.add('gold');
-        else mole.classList.remove('gold');
+        if (isPenalty) mole.classList.add('penalty');
 
         hole.classList.add('up');
         peepTimer = setTimeout(() => {
@@ -317,6 +385,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset styles
         countdownOverlay.style.display = 'block';
         countdownOverlay.style.opacity = '1';
+        countdownOverlay.textContent = '3'; // Reset text immediately
 
         let count = 3;
 
@@ -357,7 +426,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Reset Combo
         currentCombo = 0;
         isGoldenTime = false;
-        scenes.play.classList.remove('golden-mode');
+        document.querySelector('.game-container').classList.remove('golden-mode');
 
         isPlaying = true;
 
@@ -394,7 +463,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Clear Golden Time
         clearTimeout(goldenTimer);
         isGoldenTime = false;
-        scenes.play.classList.remove('golden-mode');
+        document.querySelector('.game-container').classList.remove('golden-mode');
 
         clearInterval(gameTimer);
         clearTimeout(peepTimer);
